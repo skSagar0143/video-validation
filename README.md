@@ -1,90 +1,52 @@
-# Video Validation System
+# Video Validation Studio
 
-A local-first desktop-friendly video validation tool for task videos such as clothes folding and plate organization.
+Local-first AI-assisted video validation for clothes folding, plate organization and similar table-work training data.
 
-## MVP features
-
-- Select one or multiple videos from a local file picker.
-- Analyze videos locally; videos are not uploaded to a server.
-- Detect hands with MediaPipe Hands and people with YOLO.
-- Validate expected hand count, hands leaving the video frame, people entering the frame, blur, and black frames.
-- Configure a rectangular working area and validation thresholds.
-- Generate per-video JSON and CSV reports plus an annotated MP4 when enabled.
-- Review event timestamps and evidence snapshots in the Streamlit interface.
-
-> Detection is probabilistic. A missing-hand event is a visual signal, not proof that a hand physically left the scene. Occlusion and model errors can cause uncertainty. Use the REVIEW status and inspect evidence before rejecting training data.
+## Features
+- Batch upload and local processing of multiple videos.
+- MediaPipe hand landmarks: expected hand count, possible missing/occluded hands, and excess hands.
+- YOLO person counting and configurable unwanted-object detection for supported COCO classes.
+- Optional experimental stationary-hand heuristic, working-area check, blur and black-frame checks.
+- Timestamped PASS / FAIL / REVIEW reports, evidence images, annotated MP4, per-video JSON/CSV and batch ZIP/JSON.
+- Strategy-based validation rules and replaceable detector adapters.
 
 ## Requirements
+- Python 3.11 recommended; Windows 10/11, macOS or Linux.
+- 8 GB RAM minimum; 16 GB+ recommended. NVIDIA GPU optional.
+- Internet is required for package installation and first YOLO model download. Inference runs locally after weights are cached.
+- MediaPipe 0.10.21 is pinned for the Solutions Hands API.
 
-- Python 3.10–3.11 recommended.
-- Windows 10/11, macOS, or Linux.
-- 8 GB RAM minimum; NVIDIA GPU optional.
-- First run downloads the YOLO model and MediaPipe package assets as required. After dependencies and model weights are cached, analysis can run locally without a hosted AI API.
-
-## Setup (Windows PowerShell)
-
+## Windows PowerShell
 ```powershell
+git clone https://github.com/skSagar0143/video-validation.git
+cd video-validation
 py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 streamlit run app.py
 ```
+Open http://localhost:8501. If PowerShell blocks activation, use Command Prompt and run .venv\Scripts\activate.bat.
 
-Open the local URL printed by Streamlit (normally http://localhost:8501).
+## Usage
+1. Select one or more MP4, MOV, AVI, MKV or M4V files.
+2. Configure expected hands and grace periods.
+3. Enable person detection and set allowed people.
+4. Enable unwanted-object detection and choose COCO object classes to flag.
+5. Optionally enable stationary-hand review, work-area and video-quality checks.
+6. Click Analyze selected videos; inspect events, evidence and annotated clips.
+7. Download per-video reports or the batch ZIP.
 
-## Setup (macOS/Linux)
+## Detection interpretation and limitations
+- Missing hands are REVIEW events: could be exit, occlusion, or model miss.
+- Extra hands and additional people are FAIL events, but false detections are possible. Person detection is counting, not identity recognition.
+- Unwanted-object checks support only selected classes from the pretrained COCO model. They do not detect arbitrary unknown objects; add a custom-trained detector for domain-specific objects.
+- Stationary-hand detection is an experimental centroid-motion heuristic and can flag intentional pauses.
+- Working-area detection checks all detected landmarks; calibrate the rectangle to avoid false flags.
+- Blur and black-frame rules are image heuristics; tune thresholds for your camera and lighting.
 
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-streamlit run app.py
-```
+## Tests
+Run pytest -q. Unit tests cover rules and configuration; they do not replace testing on representative camera videos.
 
-## How to use
-
-1. Start the app and choose one or more MP4, MOV, AVI, or MKV videos.
-2. Select the validation profile and adjust the expected number of hands, sampling FPS, missing-hand grace period, and person detection confidence.
-3. Optionally enable a normalized working-area rectangle (x/y/width/height as percentages).
-4. Click **Analyze selected videos**.
-5. Review PASS / FAIL / REVIEW results, event timestamps, and frame evidence.
-6. Download the CSV/JSON report and annotated video for each video.
-
-## Validation rules
-
-- **Expected hand count:** flags sustained deviations from the expected count.
-- **Hand outside frame:** flags sustained periods where a hand is not detected; the event is labelled as possible hand loss/occlusion because the model cannot always distinguish these causes.
-- **Additional person:** flags person detections beyond the configured allowed count.
-- **Working area:** flags detected hand landmarks outside the configured normalized rectangle.
-- **Blur / black frame:** optional frame quality checks.
-
-## Project structure
-
-```text
-video-validation/
-  app.py
-  requirements.txt
-  config/
-    default.json
-  video_validation/
-    __init__.py
-    config.py
-    models.py
-    video_reader.py
-    detectors.py
-    rules.py
-    engine.py
-    reporting.py
-  tests/
-    test_rules.py
-```
-
-## Notes
-
-- The initial release is a local Streamlit desktop-style web UI, not a hosted service.
-- YOLO person detection uses the Ultralytics pretrained COCO model. It detects people, not identity; it cannot determine whether a person is authorized.
-- MediaPipe handedness labels are estimates and can be affected by mirrored camera footage.
-- Object-specific rules (e.g. mobile phone detection) need a defined object list and may require a custom-trained model for reliable results.
-- Do not use this MVP as the sole basis for high-stakes decisions. Validate thresholds on representative labelled clips.
+## Privacy
+Video processing and inference run on your computer. First-run dependency/model downloads require internet. Do not use automated output as the sole basis for high-stakes decisions; inspect evidence and validate thresholds with labelled clips.

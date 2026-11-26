@@ -1,8 +1,6 @@
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import Any
-
 
 @dataclass(frozen=True)
 class HandDetection:
@@ -10,7 +8,6 @@ class HandDetection:
     score: float
     landmarks: list[tuple[float, float]]
     bbox: tuple[int, int, int, int]
-
 
 @dataclass(frozen=True)
 class FrameAnalysis:
@@ -21,7 +18,8 @@ class FrameAnalysis:
     blur_score: float | None = None
     brightness_mean: float | None = None
     hands_outside_working_area: int = 0
-
+    unwanted_objects: list[str] = field(default_factory=list)
+    hand_motion_score: float | None = None
 
 @dataclass(frozen=True)
 class ValidationEvent:
@@ -32,11 +30,10 @@ class ValidationEvent:
     end_seconds: float
     details: str
     peak_value: float | None = None
-
+    evidence_frame: int | None = None
     @property
     def duration_seconds(self) -> float:
         return max(0.0, self.end_seconds - self.start_seconds)
-
 
 @dataclass
 class VideoMetadata:
@@ -46,7 +43,6 @@ class VideoMetadata:
     fps: float
     frame_count: int
     duration_seconds: float
-
 
 @dataclass
 class VideoValidationResult:
