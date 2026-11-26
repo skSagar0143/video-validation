@@ -1,0 +1,17 @@
+services:
+  video-validation:
+    image: ghcr.io/sksagar0143/video-validation:latest
+    container_name: video-validation
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+    init: true
+    shm_size: "2gb"
+    volumes:
+      - yolo-model-cache:/root/.config/Ultralytics
+    environment:
+      STREAMLIT_SERVER_MAX_UPLOAD_SIZE: "2048"
+      YOLO_CONFIG_DIR: /root/.config/Ultralytics
+
+volumes:
+  yolo-model-cache:
